@@ -6,11 +6,14 @@ namespace BulkyWeb.Models
     public class Category
     {
         [Key]
-        public int Id { get; set; }
+        public int Id { get; set;}
         [Required]
-        [DisplayName("Category Name")]
+        [DisplayName("Category Name")]    //added data custome annotation for UI bind
+        [MaxLength(30)]                   //Name validation
         public string Name { get; set; }
-        [DisplayName("Dispay Order")]
+       
+        [DisplayName("Dispay Order")]     //added data custome annotation for UI bind 
+        [Range(1,100, ErrorMessage ="Display Order must be between 1-100")]     //Order validation and custome error message
         public int DisplayOrder { get; set; }
     }
 }
