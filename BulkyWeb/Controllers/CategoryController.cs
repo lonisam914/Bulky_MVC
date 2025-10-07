@@ -28,7 +28,7 @@ namespace BulkyWeb.Controllers
             //if (obj.Name == obj.DisplayOrder.ToString())
             //{
             //    ModelState.AddModelError("Name", "The DisplayOrder cannot exactly match the Name");
-            //}
+            //}        
             if (ModelState.IsValid)
             {
 				_db.Categories.Add(obj);
@@ -37,5 +37,13 @@ namespace BulkyWeb.Controllers
 			}	 
             return View();		
         }
+
+        //public IActionResult Edit(int Id)
+        //{
+        //    List<Category> categories = new List<Category>();
+        //    categories = _db.Categories.Where(u => u.Id == Id);
+        //    return View(categories);
+
+        //}
     }
 }
