@@ -11,10 +11,12 @@ namespace BulkyWeb.Areas.Admin.Controllers
     public class ProductController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-        public ProductController(IUnitOfWork db)
+		private readonly IWebHostEnvironment _webHostEnvironment;
+        public ProductController(IUnitOfWork db, IWebHostEnvironment webHostEnvironment )
         {
 			_unitOfWork = db;
-        }
+			_webHostEnvironment= webHostEnvironment;
+		}
         public IActionResult Index()
         {
             List<Product> products =  new List<Product>();
@@ -23,7 +25,7 @@ namespace BulkyWeb.Areas.Admin.Controllers
         }
 
 		public IActionResult Upsert(int? id)   //using for tnoth udpate and create in one view page
-		{
+			{
 			ProductViewModel productViewModel = new()
 			{
 				CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
@@ -44,11 +46,38 @@ namespace BulkyWeb.Areas.Admin.Controllers
 			}
 		}
         [HttpPost]
-        public IActionResult Create(ProductViewModel productViewModel)
+        public IActionResult Upsert(ProductViewModel productViewModel,IFormFile? file)
         {
 			if (ModelState.IsValid)   //check model property validations
 			{
-				_unitOfWork.Product.Add(productViewModel.Product);
+				string wwwRootPath = _webHostEnvironment.WebRootPath;
+				if (file != null)
+				{
+					string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName); //random Guide means random name for our file and extension
+					string ProductPath = Path.Combine(wwwRootPath, @"images\Product");
+					if (!string.IsNullOrEmpty(productViewModel.Product.ImageUrl))
+					{
+						//delete the old image
+						var oldImagePath = Path.Combine(wwwRootPath,productViewModel.Product.ImageUrl.TrimStart('\\'));
+						if (System.IO.File.Exists(oldImagePath))
+						{
+							System.IO.File.Delete(oldImagePath);
+						}
+					}
+					using (var fileStream = new FileStream(Path.Combine(ProductPath, fileName), FileMode.Create))
+					{
+						file.CopyTo(fileStream);
+					}
+					productViewModel.Product.ImageUrl = @"\images\Product\" + fileName;
+				}
+				if (productViewModel.Product.Id == 0)
+				{
+					_unitOfWork.Product.Add(productViewModel.Product);
+				}
+				else
+				{
+					_unitOfWork.Product.Update(productViewModel.Product);
+				}
 				_unitOfWork.save();
 				TempData["success"] = "Product created successfully";
 				return RedirectToAction("Index", "Product");
