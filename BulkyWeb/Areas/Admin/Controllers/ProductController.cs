@@ -1,7 +1,9 @@
 ﻿using Bulky.DataAccess.Data;
 using Bulky.DataAccess.Repository.IRepository;
 using Bulky.Models.Models;
+using Bulky.Models.ViewModel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace BulkyWeb.Areas.Admin.Controllers
 {
@@ -20,58 +22,47 @@ namespace BulkyWeb.Areas.Admin.Controllers
             return View(products);
         }
 
-        public IActionResult Create()
-        {
-            return View();
-        }
+		public IActionResult Upsert(int? id)   //using for tnoth udpate and create in one view page
+		{
+			ProductViewModel productViewModel = new()
+			{
+				CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
+				{
+					Text = u.Name,
+					Value = u.Id.ToString(),
+				}),
+				Product = new Product()
+			};
+			if (id == null || id == 0)   //create
+			{
+				return View(productViewModel);
+			}
+			else  //update
+			{
+				productViewModel.Product= _unitOfWork.Product.Get(u => u.Id == id);
+				return View(productViewModel);
+			}
+		}
         [HttpPost]
-        public IActionResult Create(Product obj)
+        public IActionResult Create(ProductViewModel productViewModel)
         {
-            //if (obj.Name == obj.DisplayOrder.ToString())
-            //{
-            //    ModelState.AddModelError("Name", "The DisplayOrder cannot exactly match the Name");  //custom validation
-            //}
-            if (ModelState.IsValid)   //check model property validations
-            {
-				_unitOfWork.Product.Add(obj);
+			if (ModelState.IsValid)   //check model property validations
+			{
+				_unitOfWork.Product.Add(productViewModel.Product);
 				_unitOfWork.save();
 				TempData["success"] = "Product created successfully";
 				return RedirectToAction("Index", "Product");
-			}	 
-            return View();		
-        }
-
-		public IActionResult Edit(int? id)
-		{
-            if (id == null || id == 0)
-            {
-              return NotFound();
-            }
-            Product category = _unitOfWork.Product.Get(u => u.Id ==id);
-            //other ways to impliment
-            //Category? category1 = _db.Categories.FirstOrDefault(c => c.Id == id);
-			//Category? category2 = _db.Categories.Where(c => c.Id == id).FirstOrDefault();
-
-			if (category == null)
-            {
-                return NotFound(); 
-            }
-            return View(category);
-		}
-		[HttpPost]
-		public IActionResult Edit(Product obj)
-		{
-
-            if (ModelState.IsValid)   //check model property validations
-			{
-				_unitOfWork.Product.Update(obj);
-				_unitOfWork.save();
-				TempData["success"] = "Category updated successfully";
-				return RedirectToAction("Index", "Product");
 			}
-			return View();
-		}
-
+			else
+			{
+				productViewModel.CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
+				{
+					Text = u.Name,
+					Value = u.Id.ToString(),
+				});
+				return View(productViewModel);
+			}	
+        }
 		public IActionResult Delete(int? id)
 		{
 			if (id == null || id == 0)
@@ -99,7 +90,5 @@ namespace BulkyWeb.Areas.Admin.Controllers
 			TempData["success"] = "Category created successfully";
 			return RedirectToAction("Index", "Product");
 		}
-
-
 	}
 }
