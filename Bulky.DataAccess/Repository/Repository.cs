@@ -19,22 +19,38 @@ namespace Bulky.DataAccess.Repository
         {
             _db= db;
 			this.dbset=_db.Set<T>();     //dbset got all dbset data from applicationdbcontext now using dbset you can perform all the operatins
+			_db.Products.Include(u => u.category);
         }
         public void Add(T entity)
 		{
 			dbset.Add(entity);
    		}
 
-		public T Get(Expression<Func<T, bool>> filter)
+		public T Get(Expression<Func<T, bool>> filter, string? includeproperties = null)
 		{
 			IQueryable<T> query = dbset;
 			query = query.Where(filter);
+			if (!string.IsNullOrEmpty(includeproperties))
+			{
+				foreach (var includeProp in includeproperties
+					.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+				{
+					query = query.Include(includeProp);
+				}
+			}
 			return query.FirstOrDefault();
 		}
-
-		public IEnumerable<T> GetAll()
+		public IEnumerable<T> GetAll(string? includeproperties =null)
 		{
 			IQueryable<T> query = dbset;
+			if (!string.IsNullOrEmpty(includeproperties))
+			{
+				foreach(var includeProp in includeproperties
+					.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+				{
+					query = query.Include(includeProp);
+				}
+			}
 			return query.ToList();
 		}
 

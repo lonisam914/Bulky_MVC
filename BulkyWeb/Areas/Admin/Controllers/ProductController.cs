@@ -19,8 +19,7 @@ namespace BulkyWeb.Areas.Admin.Controllers
 		}
         public IActionResult Index()
         {
-            List<Product> products =  new List<Product>();
-			products = _unitOfWork.Product.GetAll().ToList();
+            List<Product> products= _unitOfWork.Product.GetAll(includeproperties: "category").ToList(); //incliude this includepropertires to popupa category model with product Model
             return View(products);
         }
 
@@ -119,5 +118,13 @@ namespace BulkyWeb.Areas.Admin.Controllers
 			TempData["success"] = "Category created successfully";
 			return RedirectToAction("Index", "Product");
 		}
+		#region API CALLS
+		[HttpGet]
+		public IActionResult GetAll()
+		{
+			List<Product> products = _unitOfWork.Product.GetAll(includeproperties: "category").ToList(); //incliude this includepropertires to popupa category model with product Model
+			return Json(new { data = products });
+		}
+		#endregion
 	}
 }
